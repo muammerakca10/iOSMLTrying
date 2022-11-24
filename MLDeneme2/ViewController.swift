@@ -16,10 +16,16 @@ class ViewController: UIViewController, PHPickerViewControllerDelegate {
         
         picker.dismiss(animated: true)
         
-        results[0].itemProvider.loadObject(ofClass: UIImage.self) { (reading, error) in
-            guard let image = reading as? UIImage, error == nil else {return}
-            self.imageView.image = image
+        DispatchQueue.global().async {
+            results[0].itemProvider.loadObject(ofClass: UIImage.self) { [weak self] (reading, error) in
+                guard let image = reading as? UIImage, error == nil else {return}
+                DispatchQueue.main.async {
+                    self?.imageView.image = image
+                }
+                
+            }
         }
+        
         
         
     }
