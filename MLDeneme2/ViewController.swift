@@ -8,29 +8,10 @@
 import UIKit
 import Photos
 import PhotosUI
+import CoreML
+import Vision
 
 class ViewController: UIViewController, PHPickerViewControllerDelegate {
-    
-    
-    func picker(_ picker: PHPickerViewController, didFinishPicking results: [PHPickerResult]) {
-        
-        picker.dismiss(animated: true)
-        
-        DispatchQueue.global().async {
-            results[0].itemProvider.loadObject(ofClass: UIImage.self) { [weak self] (reading, error) in
-                guard let image = reading as? UIImage, error == nil else {return}
-                DispatchQueue.main.async {
-                    self?.imageView.image = image
-                }
-                
-            }
-        }
-        
-        
-        
-    }
-    
-    
     
     @IBOutlet weak var imageView: UIImageView!
     
@@ -60,7 +41,41 @@ class ViewController: UIViewController, PHPickerViewControllerDelegate {
         
     }
     
+    func picker(_ picker: PHPickerViewController, didFinishPicking results: [PHPickerResult]) {
+        
+        picker.dismiss(animated: true)
+        
+        DispatchQueue.global().async {
+            results[0].itemProvider.loadObject(ofClass: UIImage.self) { [weak self] (reading, error) in
+                guard let imageSelected = reading as? UIImage, error == nil else {return}
+                
+                guard let ciimage = CIImage(image: imageSelected) else {fatalError("Problem while converting to CIImage")}
+                
+                
+                DispatchQueue.main.async {
+                    self?.imageView.image = imageSelected
+                }
+                
+            }
+        }
+    }
     
+    func detectImage(image : CIImage){
+        
+        let config = MLModelConfiguration()
+        
+        guard let model  = try? VNCoreMLModel(for: DogCatRabbitMLTry_1.init(configuration: config).model) else {fatalError("Loading CoreML Model Failed")}
+        
+        let request = VNCoreMLRequest(model: model) { (request, error) in
+            guard let results = request.results as? [VNClassificationObservation] else {
+                    fatalError("Model failde to process image")
+            }
+            print(results)
+        }
+        
+        
+        
+    }
     
 }
 
