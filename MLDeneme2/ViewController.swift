@@ -11,7 +11,7 @@ import PhotosUI
 import CoreML
 import Vision
 
-class ViewController: UIViewController, PHPickerViewControllerDelegate {
+class ViewController: UIViewController, PHPickerViewControllerDelegate, UINavigationBarDelegate {
     
     @IBOutlet weak var imageView: UIImageView!
     
@@ -51,6 +51,8 @@ class ViewController: UIViewController, PHPickerViewControllerDelegate {
                 
                 guard let ciimage = CIImage(image: imageSelected) else {fatalError("Problem while converting to CIImage")}
                 
+                self?.detectImage(image: ciimage)
+                
                 
                 DispatchQueue.main.async {
                     self?.imageView.image = imageSelected
@@ -70,11 +72,22 @@ class ViewController: UIViewController, PHPickerViewControllerDelegate {
             guard let results = request.results as? [VNClassificationObservation] else {
                     fatalError("Model failde to process image")
             }
-            print(results)
+            if let firstResult = results.first{
+                print(firstResult.identifier)
+                
+                DispatchQueue.main.async {
+                    self.resultLabel.text = "%\((firstResult.confidence*100).rounded()) \(firstResult.identifier)"
+                }
+            }
         }
         
+        let handler = VNImageRequestHandler(ciImage: image)
         
-        
+        do{
+            try handler.perform([request])
+        } catch{
+            fatalError("ciimage was not handling")
+        }
     }
     
 }
